@@ -16,4 +16,4 @@ Get the latest release from [Releases page](https://github.com/yourusername/your
 ## Build from Source
 ```bash
 pip install -r requirements.txt
-pyinstaller --onefile --noconsole system_monitor.spec
+pyinstaller --onefile --noconsole --hidden-import="pynput.keyboard._win32" --collect-data matplotlib --collect-data psutil system_monitor.py
