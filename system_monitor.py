@@ -86,10 +86,22 @@ class SystemMonitor:
 
     def get_network_latency(self):
         try:
+            # Windows-specific flags to hide console window
+            startupinfo = subprocess.STARTUPINFO()
+            startupinfo.dwFlags |= subprocess.STARTF_USESHOWWINDOW
+            
             param = '-n' if platform.system().lower() == 'windows' else '-c'
             command = ['ping', param, '1', '8.8.8.8']
-            output = subprocess.check_output(command, timeout=0.8).decode()
             
+            output = subprocess.check_output(
+                command,
+                timeout=0.8,
+                startupinfo=startupinfo,
+                stderr=subprocess.DEVNULL,
+                creationflags=subprocess.CREATE_NO_WINDOW if platform.system() == 'Windows' else 0
+            ).decode(errors='ignore')
+
+            # Parse different ping output formats
             if 'time=' in output:
                 time_part = output.split('time=')[-1].split()[0]
                 latency = float(time_part.replace('ms', ''))
@@ -100,8 +112,10 @@ class SystemMonitor:
                 return None
                 
             return latency
-        except Exception:
+        except (subprocess.CalledProcessError, subprocess.TimeoutExpired,
+                ValueError, IndexError, UnicodeDecodeError):
             return None
+        
 
     def update_data(self):
         # Get metrics
